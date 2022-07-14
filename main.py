@@ -1,7 +1,7 @@
 """
 From https://python-osc.readthedocs.io/en/latest/server.html#concurrent-mode
 """
-
+import numpy as np
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
 from pythonosc import udp_client
@@ -51,11 +51,14 @@ def send_all(state):
 
 
 async def loop():
+    t = float(0)
     while True:
-        out_state = transform(input_state)
-        print(out_state)
-        send_all(out_state)
-        await asyncio.sleep(1)
+        #out_state = transform(input_state)
+        #print(out_state)
+        #send_all(out_state)
+        client.send_message("/cur1X", np.sin(t))
+        t += 0.01
+        await asyncio.sleep(0.01)
 
 
 async def init_main():
