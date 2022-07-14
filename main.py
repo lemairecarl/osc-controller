@@ -56,7 +56,8 @@ async def loop():
         #out_state = transform(input_state)
         #print(out_state)
         #send_all(out_state)
-        client.send_message("/cur1X", np.sin(t))
+        client.send_message("/cur1X", 0.5 * np.sin(t))
+        client.send_message("/cur1Y", 0.5 * np.sin(0.8 * t))
         t += 0.01
         await asyncio.sleep(0.01)
 
