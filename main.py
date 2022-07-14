@@ -24,7 +24,8 @@ def on_receive_input(address, *args):
     input_state[key] = args[0]
 
 # Send to this address
-client = udp_client.SimpleUDPClient("192.168.1.94", 54321)
+#client = udp_client.SimpleUDPClient("192.168.1.94", 54321)
+client = udp_client.SimpleUDPClient("127.0.0.1", 7000)
 
 dispatcher = Dispatcher()
 dispatcher.map("/ping", on_receive_ping, needs_reply_address=True)
@@ -33,7 +34,7 @@ dispatcher.map("/i", on_receive_input)
 
 # For receiving
 ip = "192.168.1.103"
-port = 7000
+port = 7001
 
 input_state = {'test': 0}
 
