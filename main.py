@@ -19,9 +19,9 @@ def on_receive_ping(ip_address_and_port, address, *args):
 def on_receive_pong(ip_address, address, *args):
     print(f"received pong")
     
-def on_receive_input(address, *args):
-    key = address[1:]
-    input_state[key] = args[0]
+def on_receive_position(address, *args):
+    key = address[len("/position/"):]
+    input_state[key] = np.array(args)  # args is 3 floats
 
 # Send to this address
 #client = udp_client.SimpleUDPClient("192.168.1.94", 54321)
@@ -30,19 +30,23 @@ client = udp_client.SimpleUDPClient("127.0.0.1", 7000)
 dispatcher = Dispatcher()
 dispatcher.map("/ping", on_receive_ping, needs_reply_address=True)
 dispatcher.map("/pong", on_receive_pong, needs_reply_address=True)
-dispatcher.map("/i", on_receive_input)
+dispatcher.map("/position/*", on_receive_position)
 
 # For receiving
-ip = "192.168.1.103"
+ip = "192.168.1.102"
 port = 7001
 
-input_state = {'test': 0}
+input_state = {}
 
 
 def transform(state):
-    # TODO transform state by creating new keys here
-    # Just a dummy transformation for now
-    return {"out_" + k: v for k, v in state.items()}
+    return {
+        'cur1X': state.get('Left Hand', np.zeros(3))[0] / 600.0,
+        'cur1Y': state.get('Left Hand', np.zeros(3))[1] / 600.0,
+        'cur2X': state.get('Right Hand', np.zeros(3))[0] / 600.0,
+        'cur2Y': state.get('Right Hand', np.zeros(3))[1] / 600.0,
+        'p/Zoom': state.get('Torso', np.zeros(3))[2] / 6000.0,
+    }
 
 
 def send_all(state):
@@ -53,12 +57,12 @@ def send_all(state):
 async def loop():
     t = float(0)
     while True:
-        #out_state = transform(input_state)
+        out_state = transform(input_state)
         #print(out_state)
-        #send_all(out_state)
-        client.send_message("/cur1X", 0.5 * np.sin(t))
-        client.send_message("/cur1Y", 0.5 * np.sin(0.8 * t))
-        t += 0.01
+        send_all(out_state)
+        #client.send_message("/cur1X", 0.33 + 0.03 * np.sin(0.5 * t))
+        #client.send_message("/cur1Y", 0.33 + 0.03 * np.sin(0.4 * t))
+        #t += 0.01
         await asyncio.sleep(0.01)
 
 
