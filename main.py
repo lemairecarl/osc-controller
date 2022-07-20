@@ -1,6 +1,8 @@
 """
 From https://python-osc.readthedocs.io/en/latest/server.html#concurrent-mode
 """
+from collections import defaultdict
+
 import numpy as np
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
@@ -36,17 +38,31 @@ dispatcher.map("/position/*", on_receive_position)
 ip = "192.168.1.102"
 port = 7001
 
-input_state = {}
+X, Y, Z = 0, 1, 2
+
+input_state = defaultdict(lambda: np.zeros(3))
 
 
 def transform(state):
-    return {
-        'cur1X': state.get('Left Hand', np.zeros(3))[0] / 600.0,
-        'cur1Y': state.get('Left Hand', np.zeros(3))[1] / 600.0,
-        'cur2X': state.get('Right Hand', np.zeros(3))[0] / 600.0,
-        'cur2Y': state.get('Right Hand', np.zeros(3))[1] / 600.0,
-        'p/Zoom': state.get('Torso', np.zeros(3))[2] / 6000.0,
+    left_hand_from_torso = state['Left Hand'] - state['Torso']
+    right_hand_from_torso = state['Right Hand'] - state['Torso']
+    
+    new_state = {
+        # Julia parameters
+        'cur1X': left_hand_from_torso[X] / 600.0,
+        'cur1Y': left_hand_from_torso[Y] / 600.0,
+        
+        # Panning
+        'cur2X': right_hand_from_torso[X] / 600.0,
+        'cur2Y': right_hand_from_torso[Y] / 600.0,
+        
+        # Other Mandalive params
+        'p/Zoom': state['Torso'][Z] / 3000.0,
     }
+    
+    #print(new_state['p/Zoom'])
+    
+    return new_state
 
 
 def send_all(state):
