@@ -35,7 +35,7 @@ dispatcher.map("/pong", on_receive_pong, needs_reply_address=True)
 dispatcher.map("/position/*", on_receive_position)
 
 # For receiving
-ip = "192.168.1.102"
+ip = "10.10.10.11"  # FIXME command line arg
 port = 7001
 
 X, Y, Z = 0, 1, 2
