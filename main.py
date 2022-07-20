@@ -14,6 +14,44 @@ LOCAL_IP_AND_PORT = ("10.10.10.11", 7001)  # AEmulator sends to this address. FI
 MANDALIVE_IP_AND_PORT = ("127.0.0.1", 7000)
 
 
+def transform(state):
+    """This is the function you (Thalamus hacker) will edit!
+    
+    You need to return a dictionary where a key corresponds to a Mandalive parameter, and values will be used to set
+    the parameter.
+    You can use the body tracking inputs provided to you in the `state` dictionary.
+    """
+    
+    # Compute normalized vectors
+    # I have determined empirically that [-500, 500] is a good range for coords of the vector going from torso to left
+    #   hand. Thus, the [-500, 500] will be normalized to [0, 1]
+    left_hand_from_torso = normalize(state['Left Hand'] - state['Torso'], -500, 500)
+    right_hand_from_torso = normalize(state['Right Hand'] - state['Torso'], -500, 500)
+    torso = normalize(state['Torso'][Z], 1000, 2000)
+    
+    # The values that will be sent to Mandalive
+    new_state = {
+        # Julia parameters
+        # I have determined empirically that [0.4, 0.6] is a good range for the cur1X parameter.
+        'cur1X': map_range(left_hand_from_torso[X], 0.4, 0.6),
+        'cur1Y': map_range(left_hand_from_torso[Y], 0.3, 0.4),
+        
+        # Panning
+        'cur2X': right_hand_from_torso[X],
+        'cur2Y': right_hand_from_torso[Y],
+        
+        # Other Mandalive params
+        'p/Hue': torso,
+    }
+    
+    return new_state
+
+
+# TODO everything below should be hidden from the Thalamus hackers
+# Do not edit the code below!
+# -----------------------------------------------------------------------------
+
+
 def on_receive_ping(ip_address_and_port, address, *args):
     print(f"received ping")
     
@@ -55,31 +93,6 @@ def map_range(v, out_min, out_max):
     # 0 -> out_min
     # 1 -> out_max
     return v * (out_max - out_min) + out_min
-
-
-def transform(state):
-    # Compute normalized vectors
-    # I have determined empirically that [-500, 500] is a good range for coords of the vector going from torso to left
-    #   hand. Thus, the [-500, 500] will be normalized to [0, 1]
-    left_hand_from_torso = normalize(state['Left Hand'] - state['Torso'], -500, 500)
-    right_hand_from_torso = normalize(state['Right Hand'] - state['Torso'], -500, 500)
-    torso = normalize(state['Torso'][Z], 1000, 2000)
-    
-    new_state = {
-        # Julia parameters
-        # I have determined empirically that [0.4, 0.6] is a good range for the cur1X parameter.
-        'cur1X': map_range(left_hand_from_torso[X], 0.4, 0.6),
-        'cur1Y': map_range(left_hand_from_torso[Y], 0.3, 0.4),
-        
-        # Panning
-        'cur2X': right_hand_from_torso[X],
-        'cur2Y': right_hand_from_torso[Y],
-        
-        # Other Mandalive params
-        'p/Hue': torso,
-    }
-    
-    return new_state
 
 
 def send_all(state):
