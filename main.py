@@ -9,7 +9,6 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc import udp_client
 import asyncio
 
-
 # NETWORK CONFIG
 LOCAL_IP_AND_PORT = ("10.10.10.11", 7001)  # AEmulator sends to this address. FIXME set using command line arg
 MANDALIVE_IP_AND_PORT = ("127.0.0.1", 7000)
@@ -22,17 +21,19 @@ def on_receive_ping(ip_address_and_port, address, *args):
     ip_address, port = ip_address_and_port
     client = udp_client.SimpleUDPClient(ip_address, port)
     client.send_message("/pong", 7000)
-    
+
+
 def on_receive_pong(ip_address, address, *args):
     print(f"received pong")
-    
+
+
 def on_receive_position(address, *args):
     key = address[len("/position/"):]
     input_state[key] = np.array(args)  # args is 3 floats
 
+
 # Send to this address
 client = udp_client.SimpleUDPClient(*MANDALIVE_IP_AND_PORT)
-
 
 dispatcher = Dispatcher()
 dispatcher.map("/ping", on_receive_ping, needs_reply_address=True)
@@ -96,9 +97,9 @@ async def loop():
 async def init_main():
     server = AsyncIOOSCUDPServer(LOCAL_IP_AND_PORT, dispatcher, asyncio.get_event_loop())
     transport, protocol = await server.create_serve_endpoint()  # Create datagram endpoint and start serving
-
+    
     await loop()  # Enter main loop of program
-
+    
     transport.close()  # Clean up serve endpoint
 
 
