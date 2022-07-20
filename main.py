@@ -26,7 +26,6 @@ def on_receive_position(address, *args):
     input_state[key] = np.array(args)  # args is 3 floats
 
 # Send to this address
-#client = udp_client.SimpleUDPClient("192.168.1.94", 54321)
 client = udp_client.SimpleUDPClient("127.0.0.1", 7000)
 
 dispatcher = Dispatcher()
@@ -43,33 +42,31 @@ X, Y, Z = 0, 1, 2
 input_state = defaultdict(lambda: np.zeros(3))
 
 
-def normalize_p(v, vmin, vmax):
-    # positive
+def normalize(v, vmin, vmax):
     # vmin -> 0
     # vmax -> 1
     return (v - vmin) / (vmax - vmin)
 
 
-def normalize_c(v, vmin, vmax):
-    # centered
-    # vmin -> -1
-    # vmax -> 1
-    return normalize_p(v, vmin, vmax) * 2.0 - 1.0
+def map_range(v, out_min, out_max):
+    # 0 -> out_min
+    # 1 -> out_max
+    return v * (out_max - out_min) + out_min
 
 
 def transform(state):
-    # TODO
-    # Calibrate relevant values (inputs, or transformed vectors?) to normalized space
-    # Adjust range after calibration
-    
-    left_hand_from_torso = normalize_c(state['Left Hand'] - state['Torso'], -500, 500)
-    right_hand_from_torso = normalize_c(state['Right Hand'] - state['Torso'], -500, 500)
-    torso = normalize_p(state['Torso'][Z], 1000, 2000)
+    # Compute normalized vectors
+    # I have determined empirically that [-500, 500] is a good range for coords of the vector going from torso to left
+    #   hand. Thus, the [-500, 500] will be normalized to [0, 1]
+    left_hand_from_torso = normalize(state['Left Hand'] - state['Torso'], -500, 500)
+    right_hand_from_torso = normalize(state['Right Hand'] - state['Torso'], -500, 500)
+    torso = normalize(state['Torso'][Z], 1000, 2000)
     
     new_state = {
         # Julia parameters
-        'cur1X': left_hand_from_torso[X] * 0.3 + 0.4,
-        'cur1Y': left_hand_from_torso[Y] * 0.1 + 0.3,
+        # I have determined empirically that [0.4, 0.6] is a good range for the cur1X parameter.
+        'cur1X': map_range(left_hand_from_torso[X], 0.4, 0.6),
+        'cur1Y': map_range(left_hand_from_torso[Y], 0.3, 0.4),
         
         # Panning
         'cur2X': right_hand_from_torso[X],
