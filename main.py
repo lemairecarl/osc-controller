@@ -43,29 +43,36 @@ X, Y, Z = 0, 1, 2
 input_state = defaultdict(lambda: np.zeros(3))
 
 
+def normalize_p(v, vmin, vmax):
+    # positive
+    # vmin -> 0
+    # vmax -> 1
+    return (v - vmin) / (vmax - vmin)
+
+
+def normalize_c(v, vmin, vmax):
+    # centered
+    # vmin -> -1
+    # vmax -> 1
+    return normalize_p(v, vmin, vmax) * 2.0 - 1.0
+
+
 def transform(state):
     left_hand_from_torso = state['Left Hand'] - state['Torso']
     right_hand_from_torso = state['Right Hand'] - state['Torso']
     
     new_state = {
         # Julia parameters
-        #'cur1X': left_hand_from_torso[X] / 600.0,
-        #'cur1Y': left_hand_from_torso[Y] / 600.0,
+        'cur1X': normalize_c(left_hand_from_torso[X], -500, 500),
+        'cur1Y': normalize_c(left_hand_from_torso[Y], -500, 500),
         
         # Panning
-        #'cur2X': right_hand_from_torso[X] / 600.0,
-        #1'cur2Y': right_hand_from_torso[Y] / 600.0,
+        'cur2X': normalize_c(right_hand_from_torso[X], -500, 500),
+        'cur2Y': normalize_c(right_hand_from_torso[Y], -500, 500),
         
         # Other Mandalive params
-        
-        # [0.3, 0.7] -> [0.02, 0.12]
-        # -0.3 [0, 0.5]
-        # *2 [0, 1]
-        
-        'p/Zoom': (state['Torso'][Z] / 3000.0 - 0.3) * 2 * 0.1 + 0.02,
+        'p/Zoom': normalize_p(state['Torso'][Z], 1000, 2000)
     }
-    
-    #print(new_state['p/Zoom'])
     
     return new_state
 
