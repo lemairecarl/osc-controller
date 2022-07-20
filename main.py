@@ -49,15 +49,20 @@ def transform(state):
     
     new_state = {
         # Julia parameters
-        'cur1X': left_hand_from_torso[X] / 600.0,
-        'cur1Y': left_hand_from_torso[Y] / 600.0,
+        #'cur1X': left_hand_from_torso[X] / 600.0,
+        #'cur1Y': left_hand_from_torso[Y] / 600.0,
         
         # Panning
-        'cur2X': right_hand_from_torso[X] / 600.0,
-        'cur2Y': right_hand_from_torso[Y] / 600.0,
+        #'cur2X': right_hand_from_torso[X] / 600.0,
+        #1'cur2Y': right_hand_from_torso[Y] / 600.0,
         
         # Other Mandalive params
-        'p/Zoom': state['Torso'][Z] / 3000.0,
+        
+        # [0.3, 0.7] -> [0.02, 0.12]
+        # -0.3 [0, 0.5]
+        # *2 [0, 1]
+        
+        'p/Zoom': (state['Torso'][Z] / 3000.0 - 0.3) * 2 * 0.1 + 0.02,
     }
     
     #print(new_state['p/Zoom'])
