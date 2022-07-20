@@ -58,20 +58,25 @@ def normalize_c(v, vmin, vmax):
 
 
 def transform(state):
-    left_hand_from_torso = state['Left Hand'] - state['Torso']
-    right_hand_from_torso = state['Right Hand'] - state['Torso']
+    # TODO
+    # Calibrate relevant values (inputs, or transformed vectors?) to normalized space
+    # Adjust range after calibration
+    
+    left_hand_from_torso = normalize_c(state['Left Hand'] - state['Torso'], -500, 500)
+    right_hand_from_torso = normalize_c(state['Right Hand'] - state['Torso'], -500, 500)
+    torso = normalize_p(state['Torso'][Z], 1000, 2000)
     
     new_state = {
         # Julia parameters
-        'cur1X': normalize_c(left_hand_from_torso[X], -500, 500),
-        'cur1Y': normalize_c(left_hand_from_torso[Y], -500, 500),
+        'cur1X': left_hand_from_torso[X] * 0.3 + 0.4,
+        'cur1Y': left_hand_from_torso[Y] * 0.1 + 0.3,
         
         # Panning
-        'cur2X': normalize_c(right_hand_from_torso[X], -500, 500),
-        'cur2Y': normalize_c(right_hand_from_torso[Y], -500, 500),
+        'cur2X': right_hand_from_torso[X],
+        'cur2Y': right_hand_from_torso[Y],
         
         # Other Mandalive params
-        'p/Zoom': normalize_p(state['Torso'][Z], 1000, 2000)
+        'p/Hue': torso,
     }
     
     return new_state
