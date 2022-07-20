@@ -10,6 +10,11 @@ from pythonosc import udp_client
 import asyncio
 
 
+# NETWORK CONFIG
+LOCAL_IP_AND_PORT = ("10.10.10.11", 7001)  # AEmulator sends to this address. FIXME set using command line arg
+MANDALIVE_IP_AND_PORT = ("127.0.0.1", 7000)
+
+
 def on_receive_ping(ip_address_and_port, address, *args):
     print(f"received ping")
     
@@ -26,16 +31,13 @@ def on_receive_position(address, *args):
     input_state[key] = np.array(args)  # args is 3 floats
 
 # Send to this address
-client = udp_client.SimpleUDPClient("127.0.0.1", 7000)
+client = udp_client.SimpleUDPClient(*MANDALIVE_IP_AND_PORT)
+
 
 dispatcher = Dispatcher()
 dispatcher.map("/ping", on_receive_ping, needs_reply_address=True)
 dispatcher.map("/pong", on_receive_pong, needs_reply_address=True)
 dispatcher.map("/position/*", on_receive_position)
-
-# For receiving
-ip = "10.10.10.11"  # FIXME command line arg
-port = 7001
 
 X, Y, Z = 0, 1, 2
 
@@ -85,19 +87,14 @@ def send_all(state):
 
 
 async def loop():
-    t = float(0)
     while True:
         out_state = transform(input_state)
-        #print(out_state)
         send_all(out_state)
-        #client.send_message("/cur1X", 0.33 + 0.03 * np.sin(0.5 * t))
-        #client.send_message("/cur1Y", 0.33 + 0.03 * np.sin(0.4 * t))
-        #t += 0.01
         await asyncio.sleep(0.01)
 
 
 async def init_main():
-    server = AsyncIOOSCUDPServer((ip, port), dispatcher, asyncio.get_event_loop())
+    server = AsyncIOOSCUDPServer(LOCAL_IP_AND_PORT, dispatcher, asyncio.get_event_loop())
     transport, protocol = await server.create_serve_endpoint()  # Create datagram endpoint and start serving
 
     await loop()  # Enter main loop of program
